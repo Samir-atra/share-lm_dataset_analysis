@@ -1,0 +1,7 @@
+huggingface_hub 
+pandas 
+google-genai 
+transformers 
+torch 
+seaborn 
+matplotlib
