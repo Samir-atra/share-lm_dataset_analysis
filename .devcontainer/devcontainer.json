@@ -7,5 +7,5 @@
         "ms-python.python",
         "ms-toolsai.jupyter"
     ],
-    "postCreateCommand": "pip install --upgrade pip && pip install --upgrade huggingface_hub datasets pandas google-generativeai google-colab transformers torch tensorflow seaborn matplotlib"
+    "postCreateCommand": "pip install --upgrade pip && pip install --upgrade huggingface_hub pandas google-genai transformers torch tensorflow seaborn matplotlib"
 }
