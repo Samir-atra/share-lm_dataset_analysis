@@ -24,6 +24,5 @@
             }
         }
     },
-    "postCreateCommand": "pip install --no-cache-dir --upgrade pip && pip install -r --no-cache-dirgoogle-genai 
- --upgrade requirements.txt && apt-get install git-lfs && git lfs install && git lfs pull"
+    "postCreateCommand": "pip install --no-cache-dir --upgrade pip && pip install -r --no-cache-dir --upgrade requirements.txt && apt-get install git-lfs && git lfs install && git lfs pull"
 }
