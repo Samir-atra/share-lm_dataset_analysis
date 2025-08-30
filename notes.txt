@@ -1,0 +1,6 @@
+##Classifications to use in creating the "Topic" column in the dataset:
+
+*   **WildChat:** [assisting/creative writing, analysis/decision, explanationcoding, factual info, math reason]
+*   **WebDS: Attributes** [Multihop, Structured, Unstructured (text), Unstructured (nontext), Question-Answer, Multi-Website, Action-Based, Tool-usage], **Domains** [Demographics & Policy, E-Commerce & Forums, Economics/Markets, Energy & Climate, Health, Higher Education, Music, Scientific Research, Sports, (Tourism, Trade, Airlines)]
+
+*   
