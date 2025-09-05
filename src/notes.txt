@@ -1,0 +1,44 @@
+05/09/2025 ---------------------------------------------------------------------------------
+
+Analyzing the ShareLM dataset, looking for three insights:
+*   Show the difference in user interest in the model type.
+*   Find the the topic related to the model, count and interest.
+*   Check for the count and repetition of failure of models in a specific topic.
+
+Next, "N/A" refers to unknown or an empty string when typing.
+Summary:
+
+Data Analysis Key Findings:
+
+*   The most used model in the dataset is "N/A", i.e. does not have a recorded name in the dataset and that is because the conversation was collected from another dataset and not using the plugin.
+*   The top 20 most frequent models include "N/A" and several named models, with counts decreasing sharply after the top few.
+*   When excluding "N/A" and empty model names, a different set of top 20 models emerges, showing the distribution among specific models, and the most used ones are GPT with favor to the latest.
+*   The dataset contains conversations in multiple languages, with a significant concentration in the top 10, the language documentation is so limited and english is the dominant.
+*   User contributions are highly skewed, with a few users contributing a large number of conversations while many users contribute less.
+*   Conversation lengths vary widely, with a large number of short conversations (0-1000 turns) and a long tail of much longer conversations.
+*   A more detailed view of conversations between 0 and 1000 turns shows the specific distribution within this range.
+*   The data collected using the plugin is around 10,000 and the rest of the dataset which amounts to 300,000 is from other datasets, so finding the metadata for the conversations is only in plugin data and not the rest.
+
+Insights or Next Steps:
+
+*   Further investigation into the "N/A" model category could reveal reasons for its prevalence and potential data collection or labeling issues.
+*   Analyzing the distribution of languages and user contributions can help understand the diversity and activity levels within the dataset.
+*   Manually adding the metadata to the empty fields by infering them from the dataset name ant public setup can make a big improvment to the dataset overall.
+
+##Classifications to use in creating the "Topic" column in the dataset:
+
+*   WildChat: [assisting/creative writing, analysis/decision, explanationcoding, factual info, math reason]
+*   WebDS: Attributes [Multihop, Structured, Unstructured (text), Unstructured (nontext), Question-Answer, Multi-Website, Action-Based, Tool-usage], **Domains** [Demographics & Policy, E-Commerce & Forums, Economics/Markets, Energy & Climate, Health, Higher Education, Music, Scientific Research, Sports, (Tourism, Trade, Airlines)]
+
+
+
+References:
+
+1.   Don-Yehiya S, Choshen L, Abend O. The ShareLM collection and plugin: contributing human-model chats for the benefit of the community. arXiv preprint arXiv:2408.08291. 2024 Aug 15.
+
+2.   Meyer S, Elsweiler D. " You tell me": a dataset of GPT-4-based behaviour change support conversations. InProceedings of the 2024 Conference on Human Information Interaction and Retrieval 2024 Mar 10 (pp. 411-416).
+
+3.   Zhao W, Ren X, Hessel J, Cardie C, Choi Y, Deng Y. Wildchat: 1m chatgpt interaction logs in the wild. arXiv preprint arXiv:2405.01470. 2024 May 2.
+
+4.   Hsu E, Yam HM, Bouissou I, John AM, Thota R, Koe J, Putta VS, Dharesan GK, Spangher A, Murty S, Huang T. WebDS: An End-to-End Benchmark for Web-based Data Science. arXiv preprint arXiv:2508.01222. 2025 Aug 2.
+

@@ -2,6 +2,8 @@
 
 import datasets
 import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from google import genai
 import csv
 import time
@@ -10,6 +12,7 @@ import torch # Import torch
 from google.genai import types
 import pandas as pd # Import pandas
 import json # Import json for safer parsing
+from src.utils.quota_update import check_and_update_quota
 
 
 HF_token = os.environ.get('HF_TOKEN')
@@ -23,23 +26,8 @@ print(ours)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-responses_generated = 1
-# Quota limits provided by the user
-RPM_LIMIT = 30      # Requests Per Minute
-TPM_LIMIT = 15000   # Tokens Per Minute
-RPD_LIMIT = 14400   # Requests Per Day
-
-# Variables to track current usage
-requests_this_minute = 0
-tokens_this_minute = 0
-requests_today = 0
-
-# Timestamps to track time for rate limiting
-start_time_minute = time.time()
-start_time_day = time.time()
-
-MANUAL_START_ROW = 1810
-MANUAL_END_ROW = 1816
+MANUAL_START_ROW = 1809
+MANUAL_END_ROW = 1820
 
 # File paths for saving progress in Google Drive
 progress_csv_path = f"sharelm_dataset_processing_progress.csv"
@@ -111,11 +99,12 @@ def parse_metadata(metadata):
 rows_to_skip = range(1, start_index) if start_index > 0 else None
 
 df_chunk_iter = pd.read_csv(
-    progress_csv_path,
+    original_dataset_csv_path, # <-- Read from the original, clean dataset
     chunksize=chunk_size,
+    skiprows=rows_to_skip,
+    nrows=MANUAL_END_ROW - start_index, # Read only the rows in our manual range
     dtype={'conversation_metadata': 'object'},
     skiprows=rows_to_skip,
-    nrows=chunk_size
 )
 
 print(f"Starting processing loop from index {start_index} up to {MANUAL_END_ROW}.")
@@ -127,13 +116,9 @@ for i, chunk_df in enumerate(df_chunk_iter):
     # The first chunk's index starts at `start_index`
     chunk_df.index = range(start_index + i * chunk_size, start_index + i * chunk_size + len(chunk_df))
 
-    # conversation_metadata = parse_metadata(chunk_df['conversation_metadata'][i+start_index])
-
-
-
     # Process rows starting from the last processed index within the defined chunk
     for index, row in chunk_df.iterrows():
-        conversation_metadata = parse_metadata(chunk_df['conversation_metadata'][index])
+        conversation_metadata = parse_metadata(row['conversation_metadata'])
         if index >= MANUAL_END_ROW:
             print(f"Reached manual end row {MANUAL_END_ROW}. Stopping.")
             processing_stopped = True
@@ -178,8 +163,9 @@ for i, chunk_df in enumerate(df_chunk_iter):
                         print(f"Max retries reached for row {index}. Skipping.")
                         # print("this is chunck", type(chunk_df.at[index, 'conversation_metadata']))
                         # conversation_metadata = chunk_df.at[index, 'conversation_metadata']
-                        conversation_metadata['topic'] = "Error during classification (Failed retries)"
                         chunk_df.at[index, 'conversation_metadata'] = conversation_metadata
+                        conversation_metadata['topic'] = "Error: API call failed"
+                        chunk_df.loc[index, 'conversation_metadata'] = conversation_metadata
 
 
             if response is not None and response.text:
@@ -189,8 +175,9 @@ for i, chunk_df in enumerate(df_chunk_iter):
                 # metadata = chunk_df.at[index, 'conversation_metadata']
                 print(f"Original metadata for row {index}: {conversation_metadata}")
 
-                conversation_metadata['topic'] = classified_topic
+                conversation_metadata['topic'] = classified_topic 
                 chunk_df.at[index, 'conversation_metadata'] = conversation_metadata
+                chunk_df.loc[index, 'conversation_metadata'] = conversation_metadata
                 print(f"Updated metadata for row {index}: {conversation_metadata}")
 
         
@@ -205,9 +192,16 @@ for i, chunk_df in enumerate(df_chunk_iter):
     last_processed_index_in_chunk = index
     if processing_stopped and not check_and_update_quota(0): # If stopped by quota, the last item failed
         last_processed_index_in_chunk = index - 1
+    last_processed_index_in_chunk = chunk_df.index[-1]
+    if processing_stopped: # If we stopped early (e.g., quota, manual end)
+        # The last successfully processed index is the one before the loop broke
+        last_processed_index_in_chunk = index - 1 if 'index' in locals() and index > chunk_df.index[0] else chunk_df.index[0] -1
 
     # Get the slice of the dataframe that was successfully processed
     processed_chunk_df = chunk_df.loc[chunk_df.index[0]:last_processed_index_in_chunk]
+    print("this is processed chunck df
+          ", processed_chunk_df)
+    processed_chunk_df = chunk_df.loc[chunk_df.index[0]:last_processed_index_in_chunk] if last_processed_index_in_chunk >= chunk_df.index[0] else pd.DataFrame()
 
     if not processed_chunk_df.empty:
         # Convert metadata back to string for CSV storage
@@ -227,7 +221,19 @@ print("\nProcessing finished.")
 if os.path.exists(progress_csv_path):
     print("\nDisplaying first 5 rows from the progress file:")
     df_processed = pd.read_csv(progress_csv_path)
-    display(df_processed.head())
+    rows_to_skip = range(1, start_index) if start_index > 0 else None
+
+    df_chunk_iter = pd.read_csv(
+        progress_csv_path,
+        chunksize=chunk_size,
+        dtype={'conversation_metadata': 'object'},
+        skiprows=rows_to_skip,
+        nrows=MANUAL_END_ROW - start_index
+    )
+
+    print(f"Starting processing loop from index {start_index} up to {MANUAL_END_ROW}.")
 else:
     print("No processing was done or progress file was not created.")
     
+# You can now use the display_data.py script to view the contents of sharelm_dataset_processing_progress.csv
+print(f"To view the updated data, run: python src/utils/display_data.py")

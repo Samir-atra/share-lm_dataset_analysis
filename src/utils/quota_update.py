@@ -1,3 +1,7 @@
+
+import time 
+
+
 def check_and_update_quota(tokens_used):
     """
     Checks if performing an action would exceed quotas and updates usage.
@@ -10,8 +14,23 @@ def check_and_update_quota(tokens_used):
     """
     global requests_this_minute, tokens_this_minute, requests_today
     global start_time_minute, start_time_day
+    
+    # Timestamps to track time for rate limiting
+    start_time_minute = time.time()
+    start_time_day = time.time()
 
     current_time = time.time()
+    
+    # Variables to track current usage
+    requests_this_minute = 0
+    tokens_this_minute = 0
+    requests_today = 0
+    
+    # Quota limits provided by the user
+    RPM_LIMIT = 30      # Requests Per Minute
+    TPM_LIMIT = 15000   # Tokens Per Minute
+    RPD_LIMIT = 14400   # Requests Per Day
+
 
     # Calculate time elapsed in the current minute and day
     time_elapsed_this_minute = current_time - start_time_minute
