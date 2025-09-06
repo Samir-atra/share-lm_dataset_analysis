@@ -1,4 +1,4 @@
-#imports
+#Imports
 
 import datasets
 import os
@@ -8,10 +8,10 @@ from google import genai
 import csv
 import time
 from transformers import AutoTokenizer
-import torch # Import torch
+import torch
 from google.genai import types
-import pandas as pd # Import pandas
-import json # Import json for safer parsing
+import pandas as pd 
+import json
 from src.utils.quota_update import check_and_update_quota
 
 
@@ -99,23 +99,22 @@ def parse_metadata(metadata):
 rows_to_skip = range(1, start_index) if start_index > 0 else None
 
 df_chunk_iter = pd.read_csv(
-    original_dataset_csv_path, # <-- Read from the original, clean dataset
+    original_dataset_csv_path, 
     chunksize=chunk_size,
     skiprows=rows_to_skip,
-    nrows=MANUAL_END_ROW - start_index, # Read only the rows in our manual range
+    nrows=MANUAL_END_ROW - start_index,
     dtype={'conversation_metadata': 'object'},
-    skiprows=rows_to_skip,
 )
 
 print(f"Starting processing loop from index {start_index} up to {MANUAL_END_ROW}.")
 # This flag will be used to break the outer loop
 processing_stopped = False
-global index
 for i, chunk_df in enumerate(df_chunk_iter):
     # Set the DataFrame index to match the absolute index in the original CSV
     # The first chunk's index starts at `start_index`
-    chunk_df.index = range(start_index + i * chunk_size, start_index + i * chunk_size + len(chunk_df))
 
+    chunk_df.index = range(start_index + i * chunk_size, start_index + i * chunk_size + len(chunk_df))
+    
     # Process rows starting from the last processed index within the defined chunk
     for index, row in chunk_df.iterrows():
         conversation_metadata = parse_metadata(row['conversation_metadata'])
@@ -138,6 +137,7 @@ for i, chunk_df in enumerate(df_chunk_iter):
 
         Conversation: {conversation}
         """
+        
         # Use the tokenizer to get the exact token count
         estimated_tokens_for_prompt = len(tokenizer.encode(contents))
         print(f"Processing row {index}")
@@ -163,9 +163,8 @@ for i, chunk_df in enumerate(df_chunk_iter):
                         print(f"Max retries reached for row {index}. Skipping.")
                         # print("this is chunck", type(chunk_df.at[index, 'conversation_metadata']))
                         # conversation_metadata = chunk_df.at[index, 'conversation_metadata']
-                        chunk_df.at[index, 'conversation_metadata'] = conversation_metadata
                         conversation_metadata['topic'] = "Error: API call failed"
-                        chunk_df.loc[index, 'conversation_metadata'] = conversation_metadata
+                        chunk_df.at[index, 'conversation_metadata'] = conversation_metadata
 
 
             if response is not None and response.text:
@@ -177,7 +176,6 @@ for i, chunk_df in enumerate(df_chunk_iter):
 
                 conversation_metadata['topic'] = classified_topic 
                 chunk_df.at[index, 'conversation_metadata'] = conversation_metadata
-                chunk_df.loc[index, 'conversation_metadata'] = conversation_metadata
                 print(f"Updated metadata for row {index}: {conversation_metadata}")
 
         
@@ -189,25 +187,39 @@ for i, chunk_df in enumerate(df_chunk_iter):
     # --- Save Progress After Each Chunk ---
     # Determine which rows from the chunk were actually processed in this run
     # `index` will hold the last index processed or attempted in the inner loop
-    last_processed_index_in_chunk = index
-    if processing_stopped and not check_and_update_quota(0): # If stopped by quota, the last item failed
-        last_processed_index_in_chunk = index - 1
     last_processed_index_in_chunk = chunk_df.index[-1]
     if processing_stopped: # If we stopped early (e.g., quota, manual end)
         # The last successfully processed index is the one before the loop broke
         last_processed_index_in_chunk = index - 1 if 'index' in locals() and index > chunk_df.index[0] else chunk_df.index[0] -1
 
     # Get the slice of the dataframe that was successfully processed
-    processed_chunk_df = chunk_df.loc[chunk_df.index[0]:last_processed_index_in_chunk]
-    print("this is processed chunck df
-          ", processed_chunk_df)
     processed_chunk_df = chunk_df.loc[chunk_df.index[0]:last_processed_index_in_chunk] if last_processed_index_in_chunk >= chunk_df.index[0] else pd.DataFrame()
 
     if not processed_chunk_df.empty:
-        # Convert metadata back to string for CSV storage
-        processed_chunk_df['conversation_metadata'] = processed_chunk_df['conversation_metadata'].apply(json.dumps)
-        processed_chunk_df.to_csv(progress_csv_path, mode='a', header=header, index=False)
-        header = False # Header is written, don't write it again
+        # --- Read-Modify-Write to update the main progress file ---
+        
+        # First, prepare the processed chunk by converting metadata to JSON strings
+        processed_chunk_df_copy = processed_chunk_df.copy()
+        processed_chunk_df_copy['conversation_metadata'] = processed_chunk_df_copy['conversation_metadata'].apply(
+            lambda x: json.dumps(x) if isinstance(x, dict) else x
+        )
+
+        if os.path.exists(progress_csv_path):
+            # Load the entire existing progress file to update it.
+            # This is a trade-off for correctness and simplicity over stream-processing the write.
+            # Given the chunk-based processing, this memory hit happens only during the save step.
+            main_df = pd.read_csv(progress_csv_path, low_memory=False)
+            # Use update() to modify the rows in place based on the index.
+            main_df.update(processed_chunk_df_copy)
+            # Save the entire updated DataFrame, overwriting the old file.
+            main_df.to_csv(progress_csv_path, index=False, quoting=csv.QUOTE_ALL)
+        else:
+            # If progress file doesn't exist, create it from the original and update it.
+            print(f"Progress file not found. Creating a new one from the original dataset.")
+            main_df = pd.read_csv(original_dataset_csv_path, low_memory=False)
+            main_df.update(processed_chunk_df_copy)
+            main_df.to_csv(progress_csv_path, index=False, quoting=csv.QUOTE_ALL)
+
         with open(last_processed_index_path, 'w') as f:
             f.write(str(last_processed_index_in_chunk))
         print(f"Saved processed chunk up to index {last_processed_index_in_chunk}")
@@ -217,23 +229,5 @@ for i, chunk_df in enumerate(df_chunk_iter):
 
 print("\nProcessing finished.")
 
-# The final processed data is in the progress CSV. You can load it to inspect.
-if os.path.exists(progress_csv_path):
-    print("\nDisplaying first 5 rows from the progress file:")
-    df_processed = pd.read_csv(progress_csv_path)
-    rows_to_skip = range(1, start_index) if start_index > 0 else None
-
-    df_chunk_iter = pd.read_csv(
-        progress_csv_path,
-        chunksize=chunk_size,
-        dtype={'conversation_metadata': 'object'},
-        skiprows=rows_to_skip,
-        nrows=MANUAL_END_ROW - start_index
-    )
-
-    print(f"Starting processing loop from index {start_index} up to {MANUAL_END_ROW}.")
-else:
-    print("No processing was done or progress file was not created.")
-    
 # You can now use the display_data.py script to view the contents of sharelm_dataset_processing_progress.csv
 print(f"To view the updated data, run: python src/utils/display_data.py")
