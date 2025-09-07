@@ -1,45 +1,33 @@
-# counts and analysis
+import datasets
+import pandas as pd
+from collections import Counter
+import os
 
-# Create a dictionary to store model counts
-model_counts = {}
-# Count of rows with valid model names
-valid_model_count = 0
+# This script assumes 'ours' is a loaded Hugging Face dataset.
+# For standalone execution, we'll load it here.
+print("Loading ShareLM dataset from Hugging Face...")
+ours = datasets.load_dataset("shachardon/ShareLM")["train"]
+print("Dataset loaded.")
 
-# Iterate through the dataset and count model names
-for i in range(len(ours)):
-    model_name = ours[i]["model_name"]
-    if model_name != "":  # Check if model name is not an empty string
-        valid_model_count += 1
-        if model_name in model_counts:
-            model_counts[model_name] += 1
-        else:
-            model_counts[model_name] = 1
+# --- Count and analyze model names ---
+print("\nAnalyzing model name distribution...")
+# Use a more efficient way to count model names
+model_names = [row["model_name"] for row in ours if row["model_name"]]
+model_counts = Counter(model_names)
 
-# Print the count of rows with valid model names
-print(f"Number of rows with valid model names: {valid_model_count}")
+print(f"Number of rows with a valid (non-empty) model name: {len(model_names)}")
 
-# for j in range(len(ours)):
-#     if ours[j]["model_name"] == "":
-#         print(ours[j])
-#         print(j)
-# Sort the model_counts dictionary by value in descending order
-sorted_model_counts = dict(sorted(model_counts.items(), key=lambda item: item[1], reverse=True))
+# Print the most common model counts
+print("Top 10 most common models:")
+for model, count in model_counts.most_common(10):
+    print(f"- {model}: {count}")
 
-# Print the sorted model counts dictionary
-print(sorted_model_counts)
-print(ours[0])
+# --- Filter dataset and save to a new CSV ---
+print("\nFiltering dataset to include only rows with a model name...")
+rows_with_model = [row for row in ours if row["model_name"]]
 
+df_with_model = pd.DataFrame(rows_with_model)
 
-# check for model name existance
-
-valid_model_rows = []
-for i in range(5):
-    # if ours[i]["model_name"] != "":
-    valid_model_rows.append(ours[i])
-
-print(f"Number of rows with valid model names: {len(valid_model_rows)}")
-# Optional: Print the first few rows with valid model names to inspect
-if len(valid_model_rows) > 0:
-    print("First 5 rows with valid model names:")
-    for j in range(min(5, len(valid_model_rows))):
-        print(valid_model_rows[j])
+output_csv_path = "shareLM_with_model.csv"
+df_with_model.to_csv(output_csv_path, index=False)
+print(f"Successfully saved {len(df_with_model)} rows to '{output_csv_path}'")

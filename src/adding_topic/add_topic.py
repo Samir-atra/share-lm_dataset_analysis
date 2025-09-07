@@ -26,11 +26,11 @@ print(ours)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-MANUAL_START_ROW = 1809
-MANUAL_END_ROW = 1820
+MANUAL_START_ROW = 0
+MANUAL_END_ROW = 10161
 
 # File paths for saving progress in Google Drive
-progress_csv_path = f"sharelm_dataset_processing_progress.csv"
+progress_csv_path = f"sharelm_with_model.csv"
 last_processed_index_path = f"last_processed_index.txt"
 original_dataset_csv_path = "sharelm_dataset.csv" # Path to the original saved dataset locally
 
