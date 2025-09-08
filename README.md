@@ -1,6 +1,14 @@
 # ShareLM Dataset Analysis
 
-This repository contains a Jupyter notebook for analyzing, studying, and optimizing the [ShareLM dataset](https://huggingface.co/datasets/shachardon/ShareLM), which is a collection of human-model chat conversations. The analysis focuses on understanding the distribution of models, languages, user contributions, and conversation lengths, and enriches the dataset with topic classifications using a Gemma model.
+This repository contains a collection of Python scripts for analyzing, studying, and optimizing the [ShareLM dataset](https://huggingface.co/datasets/shachardon/ShareLM), which is a collection of human-model chat conversations. The analysis focuses on understanding the distribution of models, languages, user contributions, and conversation lengths, and enriches the dataset with topic classifications using a Gemma model.
+
+## Project Structure
+
+The project is organized into the following modules within the `src` directory:
+
+-   `src/adding_topic`: Contains scripts for adding topic classifications to the dataset using a Gemma model.
+-   `src/utils`: Provides utility functions for data handling, API quota management, and file operations.
+-   `src/visualizations`: Includes scripts to generate various plots for visualizing the dataset analysis.
 
 ## Key Features
 
@@ -16,7 +24,7 @@ This repository contains a Jupyter notebook for analyzing, studying, and optimiz
 
 ## Visualizations
 
-The notebook generates the following visualizations:
+The scripts in `src/visualizations` generate the following plots:
 
 *   A horizontal bar chart showing the top 20 most frequent models, with a subplot of a scatter plot showing individual model counts.
 *   A horizontal bar chart showing the frequency of models with names (excluding the most used model).
@@ -45,11 +53,13 @@ The following Python dependencies are required:
 
 These dependencies are automatically installed when the dev container is created.
 
-### Running the Notebook
+### Running the Scripts
 
 1.  Open the project in a dev container-compatible editor (e.g., VS Code with the Dev Containers extension).
-2.  The `sharelm_dataset.ipynb` notebook can be run in a Jupyter environment.
-3.  **API Keys:** The notebook requires API keys for Hugging Face and Google AI. You will need to set these up. In the notebook, they are accessed via `userdata.get('HF_TOKEN')` and `userdata.get('GOOGLE_API_KEY')`, which is a feature of Google Colab. If running locally, you may need to adjust the code to load these keys from environment variables or a configuration file.
+2.  **API Keys:** The scripts require API keys for Hugging Face and Google AI. You will need to set these up as environment variables:
+    - `HF_TOKEN`: Your Hugging Face API token.
+    - `GOOGLE_API_KEY`: Your Google AI API key.
+3.  **Running the Analysis:** The analysis can be performed by running the scripts in the `src` directory. The main script for processing the dataset is `src/adding_topic/add_topic.py`. The visualization scripts can be run to generate the plots.
 
 ## Dataset
 
