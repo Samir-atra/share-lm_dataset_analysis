@@ -16,28 +16,20 @@ def plot_user_contributions(df, top_n=20):
     # Select the top N user contributions
     user_counts_series = user_counts_series.sort_values(ascending=False).head(top_n)
 
-    # Create a figure with two subplots arranged in a single row
-    fig, axes = plt.subplots(1, 2, figsize=(18, 8))
-    fig.suptitle(f'Top {top_n} User Contributions in ShareLM Dataset', fontsize=16)
+    # Create a single figure for the plot
+    plt.figure(figsize=(12, 8))
 
-    # First subplot: Horizontal bar chart of the top N user contributions
-    user_counts_series.plot(kind='barh', ax=axes[0])
-    axes[0].set_title('Contribution Frequency (Bar Chart)')
-    axes[0].set_xlabel('Number of Contributions')
-    axes[0].set_ylabel('User ID')
+    # Create a horizontal bar chart of the top N user contributions
+    user_counts_series.plot(kind='barh')
+    plt.title(f'Top {top_n} User Contributions in ShareLM Dataset')
+    plt.xlabel('Number of Contributions')
+    plt.ylabel('User ID')
 
-    # Second subplot: Scatter plot of individual user contribution counts
-    sns.scatterplot(x=user_counts_series.values, y=user_counts_series.index, ax=axes[1])
-    axes[1].set_title('Contribution Distribution (Scatter Plot)')
-    axes[1].set_xlabel('Number of Contributions')
-    axes[1].set_ylabel('User ID')
+    # Invert y-axis to show the user with the most contributions at the top
+    plt.gca().invert_yaxis()
 
-    # Match axes for consistency (most contributions at the top)
-    axes[0].invert_yaxis()
-    axes[1].set_xlim(axes[0].get_xlim())
-
-    # Adjust subplot parameters for a tight layout
-    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    # Adjust layout to prevent labels from being cut off
+    plt.tight_layout()
 
     # Display the figure
     plt.show()

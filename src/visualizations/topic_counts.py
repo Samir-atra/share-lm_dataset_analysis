@@ -55,28 +55,26 @@ def count_topics(file_path):
 
 def plot_topics(topic_counts):
     """
-    Generates and displays a bar chart and scatter plot for topic counts.
+    Generates and displays a bar chart for topic counts.
     """
     # Convert Counter to a pandas Series for easier plotting
     topic_counts_series = pd.Series(topic_counts).sort_values(ascending=False)
 
-    # Create a figure with two subplots
-    fig, axes = plt.subplots(1, 2, figsize=(18, 8))
+    # Create a single figure for the plot
+    plt.figure(figsize=(12, 8))
 
-    # First subplot: Horizontal bar chart of topic counts
-    topic_counts_series.plot(kind='barh', ax=axes[0])
-    axes[0].set_title('Frequency of Topics in ShareLM Dataset (Bar Chart)')
-    axes[0].set_xlabel('Count')
-    axes[0].set_ylabel('Topic')
+    # Create a horizontal bar chart of topic counts
+    ax = topic_counts_series.plot(kind='barh')
+    plt.title('Frequency of Topics in ShareLM Dataset')
+    plt.xlabel('Count')
+    plt.ylabel('Topic')
+    plt.gca().invert_yaxis() # Show most frequent at the top
 
-    # Second subplot: Scatter plot of individual topic counts
-    axes[1].scatter(topic_counts_series.values, range(len(topic_counts_series)))
-    axes[1].set_title('Individual Topic Counts (Scatter Plot)')
-    axes[1].set_xlabel('Count')
-    axes[1].set_ylabel('Topic')
-    axes[1].set_yticks(range(len(topic_counts_series)))
-    axes[1].set_yticklabels(topic_counts_series.index)
-    axes[1].invert_yaxis() # Match bar chart order
+    # Add the exact count on each bar
+    for index, value in enumerate(topic_counts_series):
+        # The y-coordinate is the index, and the x-coordinate is the value (count)
+        # We add a small offset to the x-coordinate for padding
+        ax.text(value, index, f' {value}', va='center')
 
     plt.tight_layout()
     plt.show()
