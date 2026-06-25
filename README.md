@@ -86,3 +86,11 @@ The analysis reveals several key findings:
 ## License
 
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
+
+## Citation
+
+If you use this project in your research, please cite it as follows:
+
+Attrah, Samer,
+Refining share lm: plugin expansion , synthetic annotation , and dataset analysis
+(September 21, 2025). Available at SSRN: https://ssrn.com/abstract=5525145 or http://dx.doi.org/10.2139/ssrn.5525145 
